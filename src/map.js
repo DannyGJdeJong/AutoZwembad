@@ -1,18 +1,30 @@
+const https = require('https');
 
-
-class map {
+class Map {
 
     constructor(req, res){
         this.req = req;
         this.res = res;
+        this.routingKey = "AIzaSyCzvtohlpHJlWnAS_1nuyCLk-W57pqL2Sw"
     }
 
-    resolve(){
-        this.res.write("You are trying to access the map api")
-        "https://<baseURL>/map/1/tile/<layer>/<style>/<zoom>/<X>/<Y>.<format>?key=<apiKey>[&tileSize=<tileSize>][&view=<geopoliticalView>][&language=<language>]"
+    route(params){
+        var orig = params["orig"]
+        var dest = params["dest"]
+        var waypoints = params["waypoints"]
+        var endpoint = `https://maps.googleapis.com/maps/api/directions/json?origin=${orig}&destination=${dest}&key=${this.routingKey}`
+        console.log(endpoint)
+        https.get(endpoint, (response) => {
+            var data = ''
 
+            response.on('data', (chunk) => {
+                data += chunk;
+            })
+
+            response.on('end', () => {
+                console.log(data)
+            })
+        })  
     }
-    //oQVKdPrOArjvoyvqAvFehUBYFFKG5SpP
-
 }
-module.exports = map;
+module.exports = Map;
