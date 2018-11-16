@@ -1,11 +1,22 @@
 const sql = require('sqlite3').verbose();
+const fs = require('fs');
 
-class Database {
+class database {
+
     constructor() {
-        this.database = sql.Database('./db/database.db');
-        this.database.run(`CREATE TABLE IF NOT EXISTS \`user\` (
-                            \`id\` int(32) NOT NULL AUTO_INCREMENT,
-                            \``)
+        this.database = new sql.Database('./db/database.db');
+        var queries = fs.readFileSync("./src/database/database.sql");
+        console.log("Created the database")
+        queries = queries.toString('UTF8');
+        queries = queries.split(';');
+        queries.forEach((x) => { this.database.run(x); console.log(x)} );
+        //this.database.run(queries.toString('UTF8'));
+        //this.database.close();
+        console.log("Closed the database")
+    }
+
+    inserttestdata(){
+        this.database.run();
     }
 
     InsertUser(data) {
@@ -16,3 +27,4 @@ class Database {
                             });
     }
 }
+module.exports = database;
