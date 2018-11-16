@@ -1,5 +1,10 @@
 var http = require('http');
+<<<<<<< HEAD
 var Map = require('./src/map.js');
+=======
+var map = require('./src/map.js');
+var database = require('./src/database.js');
+>>>>>>> 8d1946e6b863b423f3a7ef029350f6b55fb932a8
 
 http.createServer(function (req, res) {
 
@@ -7,7 +12,11 @@ http.createServer(function (req, res) {
     
     var url_parts = url.parse(req.url, true);
     var query = url_parts;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 8d1946e6b863b423f3a7ef029350f6b55fb932a8
 
     routes = {
         "/api/map/route": "route"
@@ -31,6 +40,7 @@ http.createServer(function (req, res) {
         map[routes[url]](parseParams(params))
     }
 
+<<<<<<< HEAD
     function parseParams(params) {
         returnObj = {}
         params.split('&').forEach(element => {
@@ -40,6 +50,13 @@ http.createServer(function (req, res) {
     }
 
     res.writeHead(200, {'Content-Type': 'application/json'});
+=======
+    if(req.url.startsWith("/api/database")){
+        databases = new database();
+        //databases.resolve();
+    }
+
+>>>>>>> 8d1946e6b863b423f3a7ef029350f6b55fb932a8
     res.end();
 }).listen(8080);
 console.log("Server listening on port 8080")
