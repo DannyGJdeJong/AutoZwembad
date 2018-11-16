@@ -4,6 +4,12 @@ var map = require('./src/map.js');
 http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'application/json'});
 
+    var url = require('url');
+    
+    var url_parts = url.parse(request.url, true);
+    var query = url_parts.;
+    
+
     routes = {
         "/api/map": map
     }
