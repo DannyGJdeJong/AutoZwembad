@@ -5,7 +5,7 @@ var database = require('./src/database.js');
 http.createServer(function (req, res) {
 
     var url = require('url');
-    
+    res.writeHead(200, {'Content-Type': 'application/json'});
     var url_parts = url.parse(req.url, true);
     var query = url_parts;
 
@@ -39,12 +39,15 @@ http.createServer(function (req, res) {
         return returnObj;
     }
 
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    if(req.url.startsWith("/api/database")){
-        databases = new database();
+    
+
+    if(url.startsWith("/api/database")){
+        databases = new database(req, res);
+        databases.GetUser(parseParams(params));
         //databases.resolve();
     }
 
-    res.end();
+    
+    
 }).listen(8080);
 console.log("Server listening on port 8080")
