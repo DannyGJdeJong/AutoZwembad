@@ -53,36 +53,42 @@ class database {
         var companyLatitude = parseFloat(params["companyLatitude"]);
         var companyLongitude = parseFloat(params["companyLongitude"]);
 
+        this.res.write(JSON.stringify(params));
+
+        console.log(JSON.stringify(params));
+        console.log(homeLatitude);
+        console.log(homeLongitude);
+
         if(!userName || !companyName || !homeLatitude || !homeLongitude){
-            this.res.writeHead(400, "Bad Request, expected userId parameter");
+            //this.res.writeHead(400, "Bad Request, expected userId parameter");
             this.res.write("{Bad Request, expected userName, companyName, homeLatitude and homeLongitude parameters}")
             this.res.end();
             return;
         }
 
-        var companyExists = false;
+        var companyId;
 
         this.database.all(
             `SELECT * 
             FROM company
-            WHERE name = ${companyName}`,
-            function (err, rows)  {
+            WHERE name = "${companyName}"`,
+            (err, rows) => {
                 if (err){
                     throw err;
                 }
                 if(rows.length > 0){
-                    companyExists = true;
+                    companyId = rows[0]["id"];
                 }
-            }.bind(companyExists));
+            });
 
-        if(!companyExists && (!companyLatitude || !companyLongitude)){
+        if(!companyId && (!companyLatitude || !companyLongitude)){
             this.res.writeHead(400, "Bad Request, expected userId parameter");
             this.res.write("{Bad Request, companyLatitude and companyLongitude need to be specified when companyName doesn't exist}")
             this.res.end();
             return;
         }
 
-        if(!companyExists && (isNaN(companyLatitude) || isNaN(companyLongitude))){
+        if(!companyId && (isNaN(companyLatitude) || isNaN(companyLongitude))){
             this.res.writeHead(400, "Bad Request, expected userId parameter");
             this.res.write("{Bad Request, exptected companyLatitude and companyLongitude to be floats}")
             this.res.end();
@@ -96,9 +102,47 @@ class database {
             return;
         }
 
-        this.database.serialize(function(){
-            if(!companyExists){
-                this.database.run()
+        this.database.serialize(() => {
+            if(!companyId){
+                var locationId;
+                this.database.run(`
+                    INSERT INTO location (latitude, longitude)
+                    VALUES (${companyLatitude}, ${companyLongitude})
+                `)
+                this.database.all(`
+                    SELECT id
+                    FROM location
+                    WHERE latitude = ${companyLatitude} AND longitude = ${companyLongitude}
+                `,
+                (err, rows) => {
+                    if (err){
+                        throw err;
+                    }
+                    if(rows.length > 0){
+                        locationId = rows[0]["id"];
+                    }
+                });
+                this.database.run(`
+                    INSERT INTO company (name, location)
+                    VALUES ("${companyName}", ${locationId})
+                `);
+                this.database.all(`
+                    SELECT id
+                    FROM company
+                    WHERE name = "${companyName}" AND location = ${locationId}
+                `,
+                (err, rows) => {
+                    if (err){
+                        throw err;
+                    }
+                    if(rows.length > 0){
+                        companyId = rows[0]["id"];
+                        console.log(companyId);
+                    }
+                });
+
+
+                console.log(companyId, locationId);
             }
         });
 
@@ -107,11 +151,11 @@ class database {
 
 
 
-        this.database.run(`INSERT INTO user(name, company, homelocation) VALUES(?, ?, ?, ?)`,
+        /*this.database.run(`INSERT INTO user(name, company, homelocation) VALUES(?, ?, ?, ?)`,
             [data['name'], data['company'], data['homelocation']],
             (err, res) => {
                 console.log("Inserted user!");
-            });
+            });*/
     }
 }
 

@@ -25,7 +25,7 @@ http.createServer(function (req, res) {
     console.log(url);
 
 
-    if(req.url.startsWith("/api/map")){
+    if(req.url.startsWith("/api/map?")){
         map = new Map(req, res);
         console.log(routes)
         map[routes[url]](parseParams(params))
@@ -39,13 +39,17 @@ http.createServer(function (req, res) {
         return returnObj;
     }
 
+    if(url.startsWith("/api/datainsert")){ //http://localhost:8080/api/datainsert?userName=Henk&companyName=HEMA&homeLatitude=0&homeLongitude=0&companyLatitude=2&companyLongitude=2
+        databases = new database(req, res);
+        databases.InsertUser(parseParams(params));
+    }
     
 
     if(url.startsWith("/api/database")){
         databases = new database(req, res);
         databases.GetUser(parseParams(params));
-        //databases.resolve();
     }
+    
 
     
     
