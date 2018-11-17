@@ -6,25 +6,18 @@ class database {
     constructor(req, res) {
         this.res = res;
         this.database = new sql.Database('./db/database.db');
+    }
+
+    InitDatabase(){
         var queries = fs.readFileSync("./src/database/database.sql");
-        console.log("Created the database")
         queries = queries.toString('UTF8');
         queries = queries.split(';');
         this.database.serialize(() => {queries.forEach((x) => { this.database.run(x, (err) => {if(err) {console.log(err.message)}}); console.log(x)} )});
-        //this.database.run(queries.toString('UTF8'));
-        //this.database.close();
-
-        this.database.each(`SELECT * FROM user`, (err, row) => {
-            if (err){
-              throw err;
-            }
-            console.log(row.id);
-          });
-        console.log("Closed the database")
     }
 
     GetUser(params){
         var userId = params["userId"];
+
         if(!userId){
             this.res.writeHead(400, "Bad Request, expected userId parameter");
             this.res.write("{Bad Request, expected userId parameter}")
@@ -47,22 +40,78 @@ class database {
             if (err){
                 throw err;
             }
-            console.log(this)
-            rows.forEach((row) => {
-                this.res.write(JSON.stringify(row));
-              });
+            this.res.write(JSON.stringify(rows));
             this.res.end();
         }.bind(this));
     }
 
-    
+    InsertUser(params) {
+        var userName = params["userName"];
+        var companyName = params["companyName"];
+        var homeLatitude = parseFloat(params["homeLatitude"]);
+        var homeLongitude = parseFloat(params["homeLongitude"]);
+        var companyLatitude = parseFloat(params["companyLatitude"]);
+        var companyLongitude = parseFloat(params["companyLongitude"]);
 
-    InsertUser(data) {
+        if(!userName || !companyName || !homeLatitude || !homeLongitude){
+            this.res.writeHead(400, "Bad Request, expected userId parameter");
+            this.res.write("{Bad Request, expected userName, companyName, homeLatitude and homeLongitude parameters}")
+            this.res.end();
+            return;
+        }
+
+        var companyExists = false;
+
+        this.database.all(
+            `SELECT * 
+            FROM company
+            WHERE name = ${companyName}`,
+            function (err, rows)  {
+                if (err){
+                    throw err;
+                }
+                if(rows.length > 0){
+                    companyExists = true;
+                }
+            }.bind(companyExists));
+
+        if(!companyExists && (!companyLatitude || !companyLongitude)){
+            this.res.writeHead(400, "Bad Request, expected userId parameter");
+            this.res.write("{Bad Request, companyLatitude and companyLongitude need to be specified when companyName doesn't exist}")
+            this.res.end();
+            return;
+        }
+
+        if(!companyExists && (isNaN(companyLatitude) || isNaN(companyLongitude))){
+            this.res.writeHead(400, "Bad Request, expected userId parameter");
+            this.res.write("{Bad Request, exptected companyLatitude and companyLongitude to be floats}")
+            this.res.end();
+            return;
+        }
+
+        if(isNaN(homeLatitude) || isNaN(homeLongitude)){
+            this.res.writeHead(400, "Bad Request, expected userId parameter");
+            this.res.write("{Bad Request, expected homeLatitude and homeLongitude to be floats}")
+            this.res.end();
+            return;
+        }
+
+        this.database.serialize(function(){
+            if(!companyExists){
+                this.database.run()
+            }
+        });
+
+
+
+
+
+
         this.database.run(`INSERT INTO user(name, company, homelocation) VALUES(?, ?, ?, ?)`,
-                            [data['name'], data['company'], data['homelocation']],
-                            (err, res) => {
-                                console.log("Inserted user!");
-                            });
+            [data['name'], data['company'], data['homelocation']],
+            (err, res) => {
+                console.log("Inserted user!");
+            });
     }
 }
 
